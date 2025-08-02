@@ -1,13 +1,17 @@
 
 import { GoogleGenAI, Modality } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
+import { saveImageToPublic } from "../../../utils/imageUtils";
+import { addImageToGallery } from "../../../utils/galleryStorage";
+import fs from 'fs';
+import path from 'path';
 
-// Simple in-memory store
 const generationCount: Record<string, number> = {};
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GOOGLE_API_KEY,
 });
+
 
 export async function POST(req: NextRequest) {
   const { prompt, uploadedImage, isEditing } = await req.json();
@@ -19,19 +23,19 @@ export async function POST(req: NextRequest) {
 
   // Check rate limit
   const count = generationCount[ip] || 0;
-//   if (count >= 1) {
-//     return NextResponse.json(
-//       {
-//         error:
-//           "You’ve reached your free limit. Please contact info@technioz.com for further access.",
-//       },
-//       { status: 403 }
-//     );
-//   }
+  //   if (count >= 1) {
+  //     return NextResponse.json(
+  //       {
+  //         error:
+  //           "You’ve reached your free limit. Please contact info@technioz.com for further access.",
+  //       },
+  //       { status: 403 }
+  //     );
+  //   }
 
   try {
     let contents: any;
-    
+
     if (isEditing && uploadedImage) {
       // For image editing, we need to include the original image
       contents = [
@@ -79,8 +83,34 @@ export async function POST(req: NextRequest) {
     }
     generationCount[ip] = count + 1;
 
+    // Save image to public folder
+    const timestamp = Date.now();
+    const filename = `ai-generated-${timestamp}.png`;
+    const savedImageUrl = await saveImageToPublic(`data:image/png;base64,${imageData}`, filename);
+
+    // Save to gallery
+    const galleryImage = {
+      id: timestamp.toString(),
+      url: savedImageUrl,
+      filename: filename,
+      prompt: prompt,
+      timestamp: new Date(),
+      isEdited: isEditing
+    };
+
+    console.log('About to save gallery image:', galleryImage);
+
+    try {
+      addImageToGallery(galleryImage);
+      console.log('Gallery image saved successfully');
+    } catch (error) {
+      console.error('Error saving to gallery:', error);
+      // Continue with the response even if gallery save fails
+    }
+
     return NextResponse.json({
-      image: `data:image/png;base64,${imageData}`,
+      image: savedImageUrl,
+      filename: filename,
     });
   } catch (err: any) {
     console.error("Gemini image error:", err.message);

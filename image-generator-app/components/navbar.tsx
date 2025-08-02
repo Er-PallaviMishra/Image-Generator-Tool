@@ -19,7 +19,7 @@ export default function Navbar() {
                   alt="AI Image Studio Logo"
                   width={140}
                   height={60}
-                  className="w-35 h-15"
+                  className="w-25 h-10"
                   quality={100}
                   priority
                 />
