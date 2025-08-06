@@ -52,7 +52,7 @@ A modern, responsive web application for AI-powered image generation and editing
 
 1. **Clone the repository**
    ```bash
-   git clone <your-repo-url>
+   git clone <https://github.com/Er-PallaviMishra/Image-Generator-Tool.git>
    cd image-generator-app
    ```
 
