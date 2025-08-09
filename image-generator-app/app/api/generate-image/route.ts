@@ -23,15 +23,15 @@ export async function POST(req: NextRequest) {
 
   // Check rate limit
   const count = generationCount[ip] || 0;
-  //   if (count >= 1) {
-  //     return NextResponse.json(
-  //       {
-  //         error:
-  //           "You’ve reached your free limit. Please contact info@technioz.com for further access.",
-  //       },
-  //       { status: 403 }
-  //     );
-  //   }
+    if (count >= 3) {
+      return NextResponse.json(
+        {
+          error:
+            "You’ve reached your free limit. Please contact info@technioz.com for further access.",
+        },
+        { status: 403 }
+      );
+    }
 
   try {
     let contents: any;

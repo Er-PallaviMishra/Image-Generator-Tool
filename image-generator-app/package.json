@@ -1,7 +1,14 @@
 {
-  "name": "image-generator-app",
+  "name": "genpic.technioz.com",
   "version": "0.1.0",
   "private": true,
+  "description": "Image generation platform powered by Next.js and Google GenAI",
+  "author": "Technioz",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Er-PallaviMishra/Image-Generator-Tool.git"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
