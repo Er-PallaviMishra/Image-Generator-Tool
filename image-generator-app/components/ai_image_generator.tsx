@@ -9,7 +9,7 @@ type Props = {
   height?: number;
   uploadedImage?: string | null;
   isEditing?: boolean;
-  onGenerate: (url: string, filename?: string) => void;
+  onGenerate: (url: string, filename?: string, imageData?: any) => void;
 };
 
 export default function AIImageGenerator({ prompt, uploadedImage, isEditing, onGenerate }: Props) {
@@ -38,7 +38,13 @@ export default function AIImageGenerator({ prompt, uploadedImage, isEditing, onG
         return;
       }
       if (data.image) {
-        onGenerate(data.image, data.filename);
+        // Pass complete image data for local storage
+        onGenerate(data.image, data.filename, {
+          id: data.id,
+          timestamp: data.timestamp,
+          prompt: data.prompt,
+          isEdited: data.isEdited
+        });
       }
     } catch (err) {
       console.error(err);
