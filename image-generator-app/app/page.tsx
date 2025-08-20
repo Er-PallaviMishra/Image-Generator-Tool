@@ -8,6 +8,7 @@ import { getUserSession } from '../utils/userSession';
 const AIImageGenerator = dynamic(() => import("../components/ai_image_generator"), { ssr: false });
 const Navbar = dynamic(() => import("../components/navbar"), { ssr: false });
 const UserInfo = dynamic(() => import("../components/user-info"), { ssr: false });
+const GenerationLimitIndicator = dynamic(() => import("../components/generation-limit-indicator"), { ssr: false });
 
 export default function Home() {
   const [prompt, setPrompt] = useState("");
@@ -117,6 +118,9 @@ export default function Home() {
 
             {/* User Info Section */}
             <UserInfo />
+            
+            {/* Generation Limit Indicator */}
+            <GenerationLimitIndicator />
 
             <div className="flex-1 flex flex-col space-y-4">
               {/* Image Upload Section */}
@@ -189,20 +193,8 @@ export default function Home() {
                 isEditing={isEditing}
                 onGenerate={(url, filename, imageData) => {
                   setImageUrl(url);
-                  // Add to local gallery
-                  const newImage = {
-                    id: imageData?.id || Date.now().toString(),
-                    url: url,
-                    filename: filename || `ai-generated-${Date.now()}.png`,
-                    prompt: prompt,
-                    timestamp: imageData?.timestamp ? new Date(imageData.timestamp) : new Date(),
-                    isEdited: isEditing
-                  };
-                  
-                  const success = addImage(newImage);
-                  if (!success) {
-                    console.warn('Failed to add image to local gallery');
-                  }
+                  // Image is already added to gallery in AIImageGenerator component
+                  // No need to add it again here to avoid double-counting
                 }}
               />
             </div>

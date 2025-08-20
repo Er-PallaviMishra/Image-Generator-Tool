@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useLocalGallery } from '../hooks/useLocalGallery';
 import { getUserSession, clearUserSession } from '../utils/userSession';
+import { useUserGenerationLimit } from '../hooks/useUserGenerationLimit';
+import { clearAllGenerationLimits } from '../utils/userGenerationLimit';
 
 export default function UserInfo() {
   const [showDetails, setShowDetails] = useState(false);
@@ -15,12 +17,26 @@ export default function UserInfo() {
     importData,
     clearGallery
   } = useLocalGallery();
+  
+  const { limitInfo, canGenerate, remaining, resetCount } = useUserGenerationLimit();
 
   const handleResetUser = () => {
     if (confirm("Are you sure you want to reset your user session? This will clear your current gallery and create a new user ID. This action cannot be undone.")) {
       clearGallery();
       clearUserSession();
+      clearAllGenerationLimits();
       window.location.reload();
+    }
+  };
+  
+  const handleResetGenerationLimit = () => {
+    if (confirm("Are you sure you want to reset your generation limit?")) {
+      const success = resetCount();
+      if (success) {
+        alert('Generation limit reset successfully!');
+      } else {
+        alert('Failed to reset generation limit');
+      }
     }
   };
 
@@ -87,7 +103,7 @@ export default function UserInfo() {
           </div>
           <div>
             <p className="text-white font-medium text-sm">User {getUserId().slice(0, 8)}...</p>
-            <p className="text-gray-400 text-xs">{stats.totalImages} images • {formatStorageSize(stats.storageSize)}</p>
+            <p className="text-gray-400 text-xs">{stats.totalImages} images • {remaining} generations left</p>
           </div>
         </div>
         
@@ -118,6 +134,32 @@ export default function UserInfo() {
             <p className="text-xs text-gray-500 mt-1">
               {formatStorageSize(storageInfo.spaceLeft)} remaining
             </p>
+          </div>
+
+          {/* Generation Limits */}
+          <div>
+            <div className="flex justify-between text-sm mb-2">
+              <span className="text-gray-400">Generation Limit</span>
+              <span className={`${canGenerate ? 'text-green-300' : 'text-red-300'}`}>
+                {limitInfo.current} / {limitInfo.max} used
+              </span>
+            </div>
+            <div className="w-full bg-slate-700 rounded-full h-2">
+              <div 
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  canGenerate ? 'bg-gradient-to-r from-green-500 to-blue-500' : 'bg-gradient-to-r from-orange-500 to-red-500'
+                }`}
+                style={{ width: `${(limitInfo.current / limitInfo.max) * 100}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-xs mt-1">
+              <span className="text-gray-500">
+                {remaining} remaining
+              </span>
+              <span className="text-gray-500">
+                Permanent limit
+              </span>
+            </div>
           </div>
 
           {/* Gallery Stats */}

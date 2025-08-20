@@ -9,7 +9,10 @@ import path from "path";
 // This API continues to save to the server for backup purposes
 // but the main gallery display will come from localStorage
 
-const generationCount: Record<string, number> = {};
+// Server-side generation tracking (fallback for users without localStorage)
+const generationCount: Record<string, { count: number; resetTime: number }> = {};
+const MAX_GENERATIONS_PER_USER = 3;
+const RESET_PERIOD_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GOOGLE_API_KEY,
@@ -21,9 +24,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
   }
   
-  // Track userId if provided (for analytics only - localStorage handles user-specific galleries)
-
+  // Use userId for rate limiting if provided, otherwise fall back to IP
   const ip = req.headers.get("x-forwarded-for") || "unknown";
+  const rateLimitKey = userId || ip;
 
   const instruction =
     `You are a professional AI image generator. Your primary role is to create high-quality, visually appealing, and contextually accurate images based on the provided prompt.
@@ -38,16 +41,31 @@ export async function POST(req: NextRequest) {
   // Combine instruction with user prompt
   const combinedPrompt = `${instruction}\nPrompt: ${prompt}`;
 
-  // Check rate limit
-  const count = generationCount[ip] || 0;
-  if (count >= 3) {
-    return NextResponse.json(
-      {
-        error:
-          "You’ve reached your free limit. Please contact info@technioz.com for further access.",
-      },
-      { status: 403 }
-    );
+  // Check rate limit (server-side fallback)
+  const now = Date.now();
+  const userGeneration = generationCount[rateLimitKey];
+  
+  if (userGeneration) {
+    // Check if limit should be reset
+    if (now > userGeneration.resetTime) {
+      // Reset the count
+      generationCount[rateLimitKey] = { count: 0, resetTime: now + RESET_PERIOD_MS };
+    } else if (userGeneration.count >= MAX_GENERATIONS_PER_USER) {
+      return NextResponse.json(
+        {
+          error: "You've reached your free limit of 3 images. Please contact info@technioz.com for further access.",
+          limitInfo: {
+            current: userGeneration.count,
+            max: MAX_GENERATIONS_PER_USER,
+            remaining: 0
+          }
+        },
+        { status: 403 }
+      );
+    }
+  } else {
+    // Initialize user generation tracking
+    generationCount[rateLimitKey] = { count: 0, resetTime: now + RESET_PERIOD_MS };
   }
 
   try {
@@ -98,7 +116,13 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
-    generationCount[ip] = count + 1;
+    // Increment generation count
+    const userGeneration = generationCount[rateLimitKey];
+    if (userGeneration) {
+      generationCount[rateLimitKey].count = userGeneration.count + 1;
+    } else {
+      generationCount[rateLimitKey] = { count: 1, resetTime: now + RESET_PERIOD_MS };
+    }
 
     // Save image to public folder
     const timestamp = Date.now();
@@ -134,7 +158,12 @@ export async function POST(req: NextRequest) {
       id: timestamp.toString(),
       timestamp: new Date().toISOString(),
       prompt: prompt,
-      isEdited: isEditing
+      isEdited: isEditing,
+      limitInfo: {
+        current: generationCount[rateLimitKey]?.count || 1,
+        max: MAX_GENERATIONS_PER_USER,
+        remaining: Math.max(0, MAX_GENERATIONS_PER_USER - (generationCount[rateLimitKey]?.count || 1))
+      }
     });
   } catch (err: any) {
     console.error("Gemini image error:", err.message);
