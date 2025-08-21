@@ -54,17 +54,26 @@ export function generateBrowserFingerprint(): string {
  */
 function getWebGLFingerprint(): string {
   try {
-    const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-    if (!gl) return 'no-webgl';
-    
-    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-    const vendor = debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : '';
-    const renderer = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : '';
-    
+    const canvas = document.createElement("canvas");
+    const gl =
+      (canvas.getContext("webgl") ||
+        canvas.getContext("experimental-webgl")) as
+        | WebGLRenderingContext
+        | null;
+
+    if (!gl) return "no-webgl";
+
+    const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+    const vendor = debugInfo
+      ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL)
+      : "";
+    const renderer = debugInfo
+      ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
+      : "";
+
     return `${vendor}-${renderer}`.slice(0, 50);
   } catch (e) {
-    return 'webgl-error';
+    return "webgl-error";
   }
 }
 
