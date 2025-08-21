@@ -120,7 +120,7 @@ export default function UserInfo() {
       {showDetails && (
         <div className="mt-4 space-y-4 border-t border-slate-600/30 pt-4">
           {/* Storage Info */}
-          <div>
+          {/* <div>
             <div className="flex justify-between text-sm mb-2">
               <span className="text-gray-400">Storage Usage</span>
               <span className="text-white">{storageUsagePercent.toFixed(1)}%</span>
@@ -134,10 +134,10 @@ export default function UserInfo() {
             <p className="text-xs text-gray-500 mt-1">
               {formatStorageSize(storageInfo.spaceLeft)} remaining
             </p>
-          </div>
+          </div> */}
 
           {/* Generation Limits */}
-          <div>
+          {/* <div>
             <div className="flex justify-between text-sm mb-2">
               <span className="text-gray-400">Generation Limit</span>
               <span className={`${canGenerate ? 'text-green-300' : 'text-red-300'}`}>
@@ -160,7 +160,7 @@ export default function UserInfo() {
                 Permanent limit
               </span>
             </div>
-          </div>
+          </div> */}
 
           {/* Gallery Stats */}
           <div className="grid grid-cols-2 gap-4">
